@@ -5,7 +5,7 @@ import org.apache.kafka.clients.consumer.KafkaConsumer;
 import java.util.Arrays;
 import java.util.Properties;
 
-public class MsgConsumer implements Runnable{
+public class MsgConsumer extends Thread{
     private String topicName;
     KafkaConsumer<String, byte[]> consumer;
 
@@ -25,13 +25,9 @@ public class MsgConsumer implements Runnable{
         consumer.subscribe(Arrays.asList(topicName));
     }
 
-    public ConsumerRecords<String, byte[]> getRecords() {
-        ConsumerRecords<String, byte[]> records = consumer.poll(1);
-        return records;
-    }
-
     @Override
     public void run() {
+
 
     }
 }

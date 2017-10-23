@@ -6,12 +6,13 @@ import java.util.Date;
 
 public class TestCons {
     public static void main(String[] args) throws InterruptedException {
+        MsgConsumer msgConsumer = new MsgConsumer("msg");
+        msgConsumer.start();
         String id;
         String value;
-        MsgConsumer msgConsumer = new MsgConsumer("msg");
         try (FileWriter fileWriter = new FileWriter("msg.csv", true)) {
             while (true) {
-                for (ConsumerRecord<String, byte[]> record : msgConsumer.getRecords()) {
+                for (ConsumerRecord<String, byte[]> record : msgConsumer.consumer.poll(1)) {
                     Msg msg = Serializator.deserialize(record.value());
                     id = msg.getId();
                     value = msg.getValue();
@@ -19,7 +20,6 @@ public class TestCons {
                     sendResponse(id);
                     fileWriter.write(id + ";" + value + System.lineSeparator());
                     fileWriter.flush();
-                    Thread.sleep(1000);
                 }
             }
         } catch (IOException e) {
@@ -30,7 +30,8 @@ public class TestCons {
     private static void sendResponse(String id) {
         System.out.println("send ID: " + id);
         Msg respMsg = new Msg(id, new Date().toString());
-        MsgProducer respProd = new MsgProducer("check", respMsg);
-        respProd.sendMsg();
+        MsgProducer respProd = new MsgProducer("check");
+        respProd.start();
+        respProd.sendMsg(respMsg);
     }
 }
