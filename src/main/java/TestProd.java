@@ -1,40 +1,40 @@
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 
+import java.io.*;
+import java.nio.charset.Charset;
 import java.util.Date;
+import java.util.concurrent.ExecutionException;
 
 public class TestProd {
     public static void main(String[] args) throws InterruptedException {
-        String id = IDGenerator.create(20);
-        String value = new Date().toString();
+        String id;
+        String value;
         for (int i = 0; i < 10; i++) {
+            id = IDGenerator.create(20);
+            value = new Date().toString();
             Msg msg = new Msg(id, value);
             MsgProducer msgProducer = new MsgProducer("msg");
-            msgProducer.start();
-            msgProducer.sendMsg(msg);
-            check(id);
+            try {
+                System.out.println("Send:" + System.lineSeparator() + id + " " + value);
+                msgProducer.sendMsg(msg);
+            } catch (ExecutionException e) {
+                e.printStackTrace();
+            }
+            Thread.sleep(3000);
+            System.out.println("Check" + check(id));
         }
     }
-    private static void check(String id){
-        try {
-            new Thread(new Runnable() {
-                @Override
-                public void run() {
-                    MsgConsumer check = new MsgConsumer("check");
-                    check.start();
-                    String resId = "";
-                    String value;
-                    while(resId.length() == 0)
-                    for (ConsumerRecord<String, byte[]> record : check.consumer.poll(1)) {
-                        Msg msg = Serializator.deserialize(record.value());
-                        resId = msg.getId();
-                        value = msg.getValue();
-                        System.out.println("Received msg's: " + resId + " " + value);
-                    }
-                }
-            }).join();
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
 
+    private static boolean check(String id) {
+        try (BufferedReader respReader = new BufferedReader(new InputStreamReader(new FileInputStream("resp")))) {
+            String line = respReader.readLine();
+            String[] result = line.split(":");
+            System.out.println("respID: " + result[0] + " respStatus: " + result[1]);
+            return id.equals(result[0]) && result[1].equals("OK") ? true : false;
+        } catch (IOException e) {
+            System.out.println(e);
+        }
+        System.out.println("error");
+        return false;
     }
 }

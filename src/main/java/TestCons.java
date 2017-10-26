@@ -16,8 +16,8 @@ public class TestCons {
                     Msg msg = Serializator.deserialize(record.value());
                     id = msg.getId();
                     value = msg.getValue();
+                    writeResponse(id);
                     System.out.println(id + " " + value);
-                    sendResponse(id);
                     fileWriter.write(id + ";" + value + System.lineSeparator());
                     fileWriter.flush();
                 }
@@ -27,11 +27,13 @@ public class TestCons {
         }
     }
 
-    private static void sendResponse(String id) {
-        System.out.println("send ID: " + id);
-        Msg respMsg = new Msg(id, new Date().toString());
-        MsgProducer respProd = new MsgProducer("check");
-        respProd.start();
-        respProd.sendMsg(respMsg);
+    private static void writeResponse(String id) {
+        try (FileWriter responseWriter = new FileWriter("resp", false)) {
+            responseWriter.write(id + ":" + "OK");
+            responseWriter.flush();
+        } catch (IOException e) {
+            System.out.println(e);
+        }
     }
+
 }
